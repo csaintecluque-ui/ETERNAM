@@ -207,7 +207,17 @@ details[open].xcard summary::after{content:"－"}
 .result .ref{color:var(--parch-dim);font-size:13px;font-family:var(--mono)}
 .result .code{font-family:var(--mono);font-size:54px;font-weight:700;letter-spacing:.14em;color:var(--copper-hi);line-height:1.1}
 .result .warn{font-size:12.5px;color:var(--parch-dim);margin-top:4px}
-.menu-list .xbtn{justify-content:flex-start;padding:0 16px}
+.menu-list .xbtn{justify-content:flex-start;padding:8px 16px;text-align:left}
+.speed-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.speed-desc{color:var(--parch-dim);font-size:13px}
+.speed{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:10px}
+.speed button{min-height:46px;border-radius:10px;background:var(--ink-3);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.speed button span{font-size:9.5px;font-weight:500;color:var(--parch-dim);margin-top:2px;white-space:nowrap}
+.speed button.sel{background:var(--copper);border-color:var(--copper-hi);color:#1b120c}
+.speed button.sel span{color:#3a2414}
+.speed-menu{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.ehint{color:var(--parch-dim);font-size:13px;line-height:1.45;margin:8px 0 0}
 
 #toast{position:fixed;left:50%;bottom:calc(var(--sab) + 18px);transform:translateX(-50%) translateY(20px);opacity:0;z-index:80;
   background:#000d;border:1px solid var(--line);color:var(--parch);padding:10px 16px;border-radius:12px;font-size:14px;
@@ -255,6 +265,11 @@ details[open].xcard summary::after{content:"－"}
       <button class="xbtn" id="btnImport">Importer le jeu…</button>
     </div>
     <input type="file" id="fileGame" accept=".jsdos,.zip,application/zip,application/octet-stream" hidden>
+
+    <div class="xcard speed-card">
+      <div class="speed-head"><b>Vitesse du jeu</b><span class="speed-desc" data-speed-desc></span></div>
+      <div class="speed" data-speed></div>
+    </div>
 
     <details class="xcard">
       <summary>Commandes du jeu</summary>
@@ -381,6 +396,12 @@ details[open].xcard summary::after{content:"－"}
     <button class="xbtn" id="mResume">▶&nbsp; Reprendre</button>
     <button class="xbtn" id="mSound">🔊&nbsp; Son : activé</button>
     <button class="xbtn" id="mLayout">⛶&nbsp; Affichage paysage : jeu agrandi</button>
+    <div class="speed-menu">
+      <div class="speed-head"><b>Vitesse du jeu</b><span class="speed-desc" data-speed-desc></span></div>
+      <div class="speed" data-speed></div>
+      <button class="xbtn" id="mSpeedApply" hidden>↻&nbsp; Appliquer : redémarrer le jeu</button>
+      <p class="ehint" id="mSpeedHint" hidden>Le changement de vitesse demande un redémarrage. Sauvegardez d'abord votre partie (D → SAVE) : le code de protection sera redemandé.</p>
+    </div>
     <button class="xbtn" id="mSave">💾&nbsp; Enregistrer les sauvegardes maintenant</button>
     <button class="xbtn" id="mRestart">↻&nbsp; Redémarrer le jeu</button>
     <button class="xbtn danger" id="mQuit">⏏&nbsp; Quitter vers l'accueil</button>
@@ -707,12 +728,53 @@ async function requestWake(){ try { if ('wakeLock' in navigator) state.wake = aw
 async function buildBundle(){
   var game = await kvGet('game'); if (!game) throw new Error('Jeu non importé');
   var changes = await kvGet('changes');
-  if (!changes) return game;
-  var all = fflate.unzipSync(game), ch = fflate.unzipSync(changes), out = {};
+  var all = fflate.unzipSync(game), out = {};
   Object.keys(all).forEach(function(n){ if (n.charAt(n.length - 1) !== '/') out[n] = [all[n], { level: 0 }]; });
-  Object.keys(ch).forEach(function(n){ if (isUserFile(n)) out[n] = [ch[n], { level: 0 }]; });
+  if (changes) { var ch = fflate.unzipSync(changes); Object.keys(ch).forEach(function(n){ if (isUserFile(n)) out[n] = [ch[n], { level: 0 }]; }); }
+  // Vitesse : on réécrit la ligne cycles= de la configuration DOSBox du bundle.
+  var confName = Object.keys(out).find(function(n){ return /^\.jsdos\/dosbox\.conf$/i.test(n); });
+  if (confName) {
+    var conf = fflate.strFromU8(out[confName][0]), cyc = 'cycles=fixed ' + SPEEDS[speedIndex()].cycles;
+    conf = /^\s*cycles\s*=.*$/mi.test(conf) ? conf.replace(/^\s*cycles\s*=.*$/mi, cyc) : conf.replace(/\[cpu\]/i, '[cpu]\n' + cyc);
+    out[confName] = [fflate.strToU8(conf), { level: 0 }];
+  }
+  state.runningSpeed = speedIndex();
   return fflate.zipSync(out, { level: 0 });
 }
+
+/* ---------------- Vitesse du jeu ---------------- */
+// Repères DOSBox : AT 286 16 MHz ≈ 3 000 cycles (configuration recommandée par le manuel),
+// 386 DX 33 ≈ 8 000, 486 DX2 66 ≈ 20 000 (réglage d'avant, beaucoup trop rapide).
+var SPEEDS = [
+  { cycles: 1500,  n: '1', s: 'Très lente', d: 'Très lente (AT 8 MHz)' },
+  { cycles: 3000,  n: '2', s: 'Origine',    d: 'D’origine (AT 16 MHz, conseillé par le manuel)' },
+  { cycles: 4500,  n: '3', s: '386 SX',     d: 'Un peu plus vive (386 SX)' },
+  { cycles: 7000,  n: '4', s: '386 DX',     d: 'Rapide (386 DX 33)' },
+  { cycles: 12000, n: '5', s: '486',        d: 'Très rapide (486)' },
+  { cycles: 20000, n: '6', s: 'Max',        d: 'Maximale (486 DX2, trop rapide)' }
+];
+var SPEED_KEY = 'eternam-speed', SPEED_DEFAULT = 1;
+function speedIndex(){
+  try { var v = parseInt(localStorage.getItem(SPEED_KEY), 10); if (v >= 0 && v < SPEEDS.length) return v; } catch(_){}
+  return SPEED_DEFAULT;
+}
+function renderSpeed(){
+  var cur = speedIndex();
+  document.querySelectorAll('[data-speed]').forEach(function(box){
+    if (!box.children.length) {
+      SPEEDS.forEach(function(sp, i){
+        var b = document.createElement('button'); b.innerHTML = sp.n + '<span>' + sp.s + '</span>';
+        b.onclick = function(){ try { localStorage.setItem(SPEED_KEY, String(i)); } catch(_){} buzz(); renderSpeed(); };
+        box.appendChild(b);
+      });
+    }
+    [].forEach.call(box.children, function(b, i){ b.classList.toggle('sel', i === cur); });
+  });
+  document.querySelectorAll('[data-speed-desc]').forEach(function(el){ el.textContent = SPEEDS[cur].d; });
+  var pending = state.running && state.runningSpeed !== undefined && state.runningSpeed !== cur;
+  $('mSpeedApply').hidden = !pending; $('mSpeedHint').hidden = !pending;
+}
+$('mSpeedApply').onclick = async function(){ $('sheetMenu').hidden = true; await stopGame(true); startGame(); };
 
 async function startGame(){
   $('home').hidden = true; $('game').hidden = false; $('loading').hidden = false; $('loadingText').textContent = 'Préparation du jeu…';
@@ -759,7 +821,7 @@ async function stopGame(save){
 }
 
 $('btnPlay').onclick = startGame;
-$('tbMenu').onclick = function(){ $('sheetMenu').hidden = false; };
+$('tbMenu').onclick = function(){ renderSpeed(); $('sheetMenu').hidden = false; };
 $('mResume').onclick = function(){ $('sheetMenu').hidden = true; };
 $('mSave').onclick = async function(){ $('sheetMenu').hidden = true; await saveChanges(true); };
 $('mQuit').onclick = async function(){ $('sheetMenu').hidden = true; await stopGame(true); };
@@ -774,6 +836,7 @@ $('mSound').onclick = function(){
 // js-dos garde une copie de chaque bundle lancé : inutile ici (le jeu est déjà dans notre base), on la purge au démarrage.
 try { indexedDB.deleteDatabase('js-dos-cache (guest)'); } catch(_){}
 buildCodes();
+renderSpeed();
 refreshHome().catch(function(e){ console.error(e); toast('Stockage local indisponible (navigation privée ?)', 5000); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
