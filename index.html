@@ -298,7 +298,7 @@ details[open].xcard summary::after{content:"－"}
     <details class="xcard">
       <summary>Sauvegardes</summary>
       <div class="help">
-        <p style="margin-top:8px">Sauvegardez dans le jeu : <b>D</b> → flèche ↓ sur SAVE → Entrée → choisissez la ligne (↑↓) → tapez un nom avec le clavier <b>ABC</b> (ne validez jamais une ligne vide) → Entrée. Pour reprendre : <b>D</b> → LOAD → ligne → Entrée. L'appli enregistre ensuite automatiquement les fichiers de sauvegarde sur l'appareil (toutes les 20 s et quand vous quittez).</p>
+        <p style="margin-top:8px">Sauvegardez dans le jeu : <b>D</b> → flèche <b>↓</b> sur SAVE (attention, LOAD est présélectionné et charge une partie) → Entrée → choisissez la ligne (↑↓) → tapez un nom avec le clavier <b>ABC</b> (ne validez jamais une ligne vide) → Entrée. Pour reprendre : <b>D</b> → LOAD → ligne → Entrée. L'appli enregistre ensuite automatiquement les fichiers de sauvegarde sur l'appareil (toutes les 20 s et quand vous quittez).</p>
         <p id="saveInfo">Aucune sauvegarde enregistrée.</p>
         <div class="row2">
           <button class="xbtn" id="btnExport">Exporter</button>
@@ -593,6 +593,11 @@ function bindHold(el){
   el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 }
 document.querySelectorAll('#controls-act .k, #topbar .k-tap').forEach(bindHold);
+// Rappel à la première ouverture du menu Système : LOAD est présélectionné par le jeu.
+document.querySelector('#controls-act .k[data-key="68"]').addEventListener('pointerdown', function(){
+  if (state.sysHint) return; state.sysHint = true;
+  toast('Système : LOAD = charger une partie · ↓ puis Entrée = SAVE (sauvegarder)', 5000);
+});
 
 // Croix directionnelle 8 directions
 (function(){
@@ -736,7 +741,12 @@ async function buildBundle(){
   var all = fflate.unzipSync(game), out = {};
   var orig = new Date(1993, 1, 17, 12, 0, 0); // date des fichiers d'origine (le jeu ne voit pas de fichiers « modifiés aujourd'hui »)
   Object.keys(all).forEach(function(n){ if (n.charAt(n.length - 1) !== '/') out[n] = [all[n], { level: 0, mtime: orig }]; });
-  if (changes) { var ch = fflate.unzipSync(changes); Object.keys(ch).forEach(function(n){ if (isUserFile(n)) out[n] = [ch[n], { level: 0 }]; }); }
+  // La copie d'origine contient, dans les emplacements 1 à 7, les parties d'un ancien joueur
+  // (KILO4, MISSION, GARDE…) déjà avancées dans l'aventure. Tant que vous n'avez rien sauvegardé
+  // dans un emplacement, on le remplace par la partie vierge (0.AVE = « INIT THE GAME »).
+  var ch = changes ? fflate.unzipSync(changes) : {};
+  if (out['0.AVE']) for (var slot = 1; slot <= 9; slot++) { var nm = slot + '.AVE'; if (out[nm] && !ch[nm]) out[nm] = [out['0.AVE'][0], { level: 0, mtime: orig }]; }
+  Object.keys(ch).forEach(function(n){ if (isUserFile(n)) out[n] = [ch[n], { level: 0 }]; });
   // Vitesse : on réécrit la ligne cycles= de la configuration DOSBox du bundle.
   var confName = Object.keys(out).find(function(n){ return /^\.jsdos\/dosbox\.conf$/i.test(n); });
   if (confName) {
