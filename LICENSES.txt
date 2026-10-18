@@ -1,0 +1,10 @@
+Eternam — édition tactile (PWA)
+Interface : Anamnesis · CSC.
+
+Composants tiers inclus :
+- js-dos 8.3.20 — GPL-2.0 — https://github.com/caiiiycuk/js-dos (sources : https://www.npmjs.com/package/js-dos)
+  Comprend l'émulateur DOSBox compilé en WebAssembly (GPL-2.0).
+- fflate 0.8.2 — MIT — https://github.com/101arrowz/fflate
+
+Le jeu Eternam (© Infogrames 1992) n'est PAS inclus dans cette appli : chaque joueur importe
+sa propre copie (fichier eternam.jsdos), qui reste stockée localement sur son appareil.

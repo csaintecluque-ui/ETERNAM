@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1B1512">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Eternam">
+<meta name="description" content="Eternam (Infogrames, 1992) jouable sur iPhone et Android : émulateur DOS, commandes tactiles, codes de protection intégrés.">
+<title>Eternam</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="vendor/js-dos/js-dos.css">
+<style>
+:root{
+  --ink:#1B1512; --ink-2:#251d19; --ink-3:#30261f; --line:#4a3a2e;
+  --copper:#C9804F; --copper-hi:#e09a68; --copper-lo:#8f5a37;
+  --parch:#EAD9B8; --parch-dim:#b9a88a; --muted:#8c7b66;
+  --danger:#d0644a;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --serif: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--ink);color:var(--parch);font-family:var(--sans);
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+body{position:fixed;inset:0;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+.noselect,button,.pad,.k{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+
+/* ---------- Accueil ---------- */
+#home{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(var(--sat) + 14px) calc(var(--sar) + 16px) calc(var(--sab) + 28px) calc(var(--sal) + 16px);
+  background:radial-gradient(120% 70% at 50% 0%, #2b211b 0%, var(--ink) 60%)}
+.wrap{max-width:560px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;color:var(--parch-dim);font-size:13px;letter-spacing:.04em}
+.brand img{width:36px;height:36px;display:block}
+.hero{text-align:center;padding:34px 0 22px}
+.hero h1{font-family:var(--serif);font-weight:600;font-size:clamp(46px,14vw,76px);letter-spacing:.18em;margin:0;
+  padding-left:.18em;color:var(--parch);text-shadow:0 2px 0 #000, 0 0 28px rgba(201,128,79,.25)}
+.hero .rule{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--copper),transparent);margin:14px auto}
+.hero p{margin:0;color:var(--parch-dim);font-size:14px;letter-spacing:.06em}
+.xcard{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+.status{display:flex;gap:12px;align-items:flex-start}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);margin-top:5px;flex:none}
+.dot.ok{background:#7fb069;box-shadow:0 0 8px #7fb06988}
+.status b{display:block;font-weight:600}
+.status small{color:var(--parch-dim);font-size:13px;line-height:1.45;display:block;margin-top:2px}
+.xbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:12px;
+  border:1px solid var(--line);background:var(--ink-3);font-size:16px;font-weight:600;margin-top:10px}
+.xbtn:active{transform:translateY(1px);filter:brightness(1.15)}
+.xbtn.primary{background:linear-gradient(180deg,var(--copper-hi),var(--copper));color:#1b120c;border-color:var(--copper-hi);min-height:60px;font-size:19px;letter-spacing:.04em}
+.xbtn.primary:disabled{opacity:.35;filter:grayscale(.6)}
+.xbtn.ghost{background:transparent}
+.xbtn.danger{color:var(--danger)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row2 .xbtn{margin-top:0}
+details.xcard summary{list-style:none;font-weight:600;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+details.xcard summary::-webkit-details-marker{display:none}
+details.xcard summary::after{content:"＋";color:var(--copper)}
+details[open].xcard summary::after{content:"－"}
+.help{color:var(--parch-dim);font-size:14px;line-height:1.55}
+.help table{width:100%;border-collapse:collapse;margin-top:8px}
+.help td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.help td:first-child{white-space:nowrap;color:var(--parch);font-family:var(--mono);font-size:13px;width:1%;padding-right:12px}
+.help ol{padding-left:20px;margin:8px 0}
+.foot{color:var(--muted);font-size:12px;text-align:center;margin-top:22px;line-height:1.6}
+.foot a{color:var(--parch-dim)}
+
+/* ---------- Jeu ---------- */
+#game{position:absolute;inset:0;background:#000;touch-action:none;display:grid;
+  padding:var(--sat) var(--sar) var(--sab) var(--sal);
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto 1fr;
+  grid-template-areas:"top top" "stage stage" "pad act"}
+#topbar{grid-area:top;display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--ink)}
+#topbar .sp{flex:1}
+.tb{min-width:44px;height:36px;padding:0 10px;border-radius:9px;background:var(--ink-3);border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--parch);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.tb.on,.tb:active{background:var(--copper);color:#1b120c;border-color:var(--copper-hi)}
+.tb img{width:24px;height:24px}
+#stage{grid-area:stage;position:relative;width:100%;aspect-ratio:4/3;max-height:58dvh;margin:0 auto;background:#000}
+#dos{position:absolute;inset:0}
+#dos .jsdos-rso{background:#000}
+#controls-pad{grid-area:pad;display:flex;align-items:flex-end;justify-content:center;background:var(--ink);padding:10px 8px 26px}
+#controls-act{grid-area:act;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px;background:var(--ink);padding:10px 8px 26px}
+
+/* croix directionnelle */
+.pad{position:relative;width:min(45vw,200px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, #3a2e26 0%, #231b16 70%);border:1px solid var(--line);
+  box-shadow:inset 0 2px 10px #0008, 0 3px 0 #0006;touch-action:none}
+.pad .arm{position:absolute;background:#4b3b30;border-radius:8px;opacity:.95}
+.pad .arm.v{left:36%;width:28%;top:8%;height:84%}
+.pad .arm.h{top:36%;height:28%;left:8%;width:84%}
+.pad .tri{position:absolute;width:0;height:0;border:9px solid transparent}
+.pad .tri.u{left:50%;top:13%;transform:translateX(-50%);border-bottom:12px solid var(--parch-dim);border-top:0}
+.pad .tri.d{left:50%;bottom:13%;transform:translateX(-50%);border-top:12px solid var(--parch-dim);border-bottom:0}
+.pad .tri.l{top:50%;left:13%;transform:translateY(-50%);border-right:12px solid var(--parch-dim);border-left:0}
+.pad .tri.r{top:50%;right:13%;transform:translateY(-50%);border-left:12px solid var(--parch-dim);border-right:0}
+.pad .tri.on{filter:drop-shadow(0 0 6px var(--copper))}
+.pad .tri.u.on{border-bottom-color:var(--copper-hi)} .pad .tri.d.on{border-top-color:var(--copper-hi)}
+.pad .tri.l.on{border-right-color:var(--copper-hi)} .pad .tri.r.on{border-left-color:var(--copper-hi)}
+.pad .knob{position:absolute;left:50%;top:50%;width:26%;height:26%;margin:-13% 0 0 -13%;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#5c4a3d,#2c221c);border:1px solid #5d4a3c;transition:transform .05s}
+
+/* boutons d'action */
+.cmds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;max-width:240px}
+.k{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:46px;border-radius:11px;background:var(--ink-3);border:1px solid var(--line);
+  box-shadow:0 3px 0 #0007;touch-action:none;line-height:1}
+.k .l{font-size:16px;font-weight:700;color:var(--parch)}
+.k .s{font-size:10px;color:var(--parch-dim);margin-top:3px;letter-spacing:.02em}
+.k.on{transform:translateY(2px);box-shadow:0 1px 0 #0007;background:var(--copper);border-color:var(--copper-hi)}
+.k.on .l,.k.on .s{color:#1b120c}
+.bigrow{display:flex;gap:10px;width:100%;max-width:240px}
+.k.fire{flex:1.25;min-height:62px;border-radius:31px;background:radial-gradient(circle at 45% 35%,#d98b55,#9b5a33);border-color:#e7a273}
+.k.fire .l,.k.fire .s{color:#1b120c}
+.k.enter{flex:1;min-height:62px;border-radius:16px}
+
+/* paysage : jeu au centre, commandes de chaque côté */
+@media (orientation:landscape){
+  #game{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-rows:auto 1fr;
+    grid-template-areas:"pad top act" "pad stage act"}
+  #topbar{background:#000;justify-content:center;padding:4px 6px}
+  #topbar .sp{flex:0 0 8px}
+  #stage{max-height:none;height:min(calc(100dvh - var(--sat) - var(--sab) - 46px),
+      calc((100vw - var(--sal) - var(--sar) - 2*clamp(150px,24vw,230px)) * 0.75));
+    width:auto;align-self:start}
+  #controls-pad,#controls-act{background:#000;padding:8px 6px;min-width:0;justify-content:center}
+  #controls-pad{align-items:center}
+  .pad{width:min(100%,180px,60dvh)}
+  .cmds,.bigrow{width:100%;max-width:220px}
+  .k{min-height:min(44px,10.5dvh)}
+  .k.fire,.k.enter{min-height:min(58px,15dvh)}
+}
+
+/* clavier virtuel */
+#kbd{position:absolute;left:0;right:0;bottom:0;z-index:20;background:var(--ink);border-top:1px solid var(--line);
+  padding:8px calc(var(--sar) + 6px) calc(var(--sab) + 8px) calc(var(--sal) + 6px)}
+#kbd .r{display:flex;gap:5px;justify-content:center;margin:5px 0}
+#kbd .k{flex:1;max-width:58px;min-height:44px}
+#kbd .k.w2{flex:2;max-width:120px} #kbd .k.w4{flex:4;max-width:260px}
+#kbd .k .l{font-size:15px}
+@media (orientation:landscape){#kbd .k{min-height:min(40px,10dvh)} #kbd .r{margin:3px 0}}
+
+/* feuilles modales */
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(10,7,5,.72);display:flex;align-items:flex-end;justify-content:center;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.sheet .panel{width:100%;max-width:560px;max-height:calc(100dvh - var(--sat) - 10px);overflow-y:auto;background:var(--ink-2);
+  border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;
+  padding:16px calc(var(--sar) + 16px) calc(var(--sab) + 18px) calc(var(--sal) + 16px)}
+@media (orientation:landscape){.sheet{align-items:center}.sheet .panel{border-radius:18px;border-bottom:1px solid var(--line);max-width:760px}}
+.sheet h2{font-family:var(--serif);font-size:26px;font-weight:600;margin:0 0 4px;letter-spacing:.03em}
+.sheet .hint{color:var(--parch-dim);font-size:13.5px;margin:0 0 12px;line-height:1.45}
+.sheet .close{float:right;width:40px;height:40px;border-radius:20px;background:var(--ink-3);border:1px solid var(--line);font-size:18px}
+.grid-m{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.grid-d{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px}
+.chip{min-height:46px;border-radius:10px;background:var(--ink-3);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.chip b{font-family:var(--mono);font-size:15px;letter-spacing:.04em}
+.chip span{font-size:10px;color:var(--parch-dim);margin-top:2px}
+.chip.sel{background:var(--copper);border-color:var(--copper-hi);color:#1b120c}
+.chip.sel span{color:#3a2414}
+@media (max-width:380px){.grid-m{grid-template-columns:repeat(4,1fr)}}
+@media (orientation:landscape){.codes-body{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}}
+.result{margin-top:12px;border-radius:14px;border:1px dashed var(--copper-lo);padding:14px;text-align:center}
+.result .ref{color:var(--parch-dim);font-size:13px;font-family:var(--mono)}
+.result .code{font-family:var(--mono);font-size:54px;font-weight:700;letter-spacing:.14em;color:var(--copper-hi);line-height:1.1}
+.result .warn{font-size:12.5px;color:var(--parch-dim);margin-top:4px}
+.menu-list .xbtn{justify-content:flex-start;padding:0 16px}
+
+#toast{position:fixed;left:50%;bottom:calc(var(--sab) + 18px);transform:translateX(-50%) translateY(20px);opacity:0;z-index:80;
+  background:#000d;border:1px solid var(--line);color:var(--parch);padding:10px 16px;border-radius:12px;font-size:14px;
+  transition:all .25s;pointer-events:none;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--parch-dim);font-size:14px;z-index:5;background:#000}
+#loading img{width:64px;height:64px;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45;transform:scale(.94)}}
+</style>
+<script>
+/* iOS / Safari : l'audio n'est autorisé qu'après un geste. On garde la trace des
+   AudioContext créés par l'émulateur pour les relancer au prochain appui. */
+(function(){
+  var Native = window.AudioContext || window.webkitAudioContext; if(!Native) return;
+  window.__acs = [];
+  function Wrapped(a){ var c = a ? new Native(a) : new Native(); window.__acs.push(c); return c; }
+  Wrapped.prototype = Native.prototype;
+  window.AudioContext = Wrapped; window.webkitAudioContext = Wrapped;
+  function unlock(){ window.__acs.forEach(function(c){ if(c.state !== 'running' && c.state !== 'closed'){ try{ c.resume(); }catch(e){} } }); }
+  ['touchend','pointerdown','keydown'].forEach(function(t){ document.addEventListener(t, unlock, true); });
+})();
+</script>
+</head>
+<body>
+
+<!-- ================= ACCUEIL ================= -->
+<div id="home">
+  <div class="wrap">
+    <div class="brand"><img src="icons/favicon.svg" alt="Anamnesis · CSC"><span>Anamnesis · CSC</span></div>
+
+    <div class="hero">
+      <h1>ETERNAM</h1>
+      <div class="rule"></div>
+      <p>Infogrames · 1992 — édition tactile</p>
+    </div>
+
+    <div class="xcard status">
+      <span class="dot" id="stDot"></span>
+      <div><b id="stTitle">Jeu non importé</b><small id="stText">Importez le fichier <b>eternam.jsdos</b> une seule fois : il reste ensuite stocké sur cet appareil, utilisable hors ligne.</small></div>
+    </div>
+
+    <button class="xbtn primary" id="btnPlay" disabled>▶&nbsp; Jouer</button>
+    <div class="row2" style="margin-top:10px">
+      <button class="xbtn" id="btnCodes">Codes de protection</button>
+      <button class="xbtn" id="btnImport">Importer le jeu…</button>
+    </div>
+    <input type="file" id="fileGame" accept=".jsdos,.zip,application/zip,application/octet-stream" hidden>
+
+    <details class="xcard">
+      <summary>Commandes du jeu</summary>
+      <div class="help">
+        <table>
+          <tr><td>Croix</td><td>Se déplacer (flèches). Dans les menus : choisir une ligne.</td></tr>
+          <tr><td>Feu</td><td>Lancer la boule de feu (barre d'espace). En donjon, seulement quand <b>ALERT</b> clignote.</td></tr>
+          <tr><td>Entrée</td><td>Valider · demi-tour à l'extérieur · accélérer les dialogues.</td></tr>
+          <tr><td>T</td><td>Prendre un objet</td></tr>
+          <tr><td>U</td><td>Utiliser l'objet sélectionné</td></tr>
+          <tr><td>L</td><td>Examiner / lire</td></tr>
+          <tr><td>S</td><td>Parler</td></tr>
+          <tr><td>I</td><td>Feuille de personnage (inventaire)</td></tr>
+          <tr><td>D</td><td>Menu système : SAVE / LOAD, volume, taille de fenêtre</td></tr>
+          <tr><td>Tab</td><td>Doigt de sélection sur la barre d'icônes</td></tr>
+          <tr><td>P · Échap</td><td>Pause · quitter</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <details class="xcard">
+      <summary>Sauvegardes</summary>
+      <div class="help">
+        <p style="margin-top:8px">Sauvegardez dans le jeu : <b>D</b> → flèche ↓ sur SAVE → Entrée → choisissez la ligne (↑↓) → tapez un nom avec le clavier <b>ABC</b> (ne validez jamais une ligne vide) → Entrée. Pour reprendre : <b>D</b> → LOAD → ligne → Entrée. L'appli enregistre ensuite automatiquement les fichiers de sauvegarde sur l'appareil (toutes les 20 s et quand vous quittez).</p>
+        <p id="saveInfo">Aucune sauvegarde enregistrée.</p>
+        <div class="row2">
+          <button class="xbtn" id="btnExport">Exporter</button>
+          <button class="xbtn" id="btnImportSave">Importer</button>
+        </div>
+        <input type="file" id="fileSave" accept=".zip,application/zip" hidden>
+        <button class="xbtn ghost danger" id="btnReset">Supprimer le jeu et les sauvegardes de cet appareil</button>
+      </div>
+    </details>
+
+    <details class="xcard">
+      <summary>Installer sur l'écran d'accueil</summary>
+      <div class="help">
+        <ol>
+          <li><b>iPhone / iPad</b> : ouvrir cette page dans Safari → bouton Partager → « Sur l'écran d'accueil ».</li>
+          <li><b>Android</b> : Chrome → menu ⋮ → « Installer l'application ».</li>
+          <li>Ouvrir l'appli depuis l'icône, puis « Importer le jeu » et choisir <b>eternam.jsdos</b> (Fichiers, Drive, Téléchargements…).</li>
+        </ol>
+        <p>Le jeu tourne mieux en mode paysage. Le son démarre au premier appui sur l'écran.</p>
+      </div>
+    </details>
+
+    <p class="foot">Émulation : <a href="https://github.com/caiiiycuk/js-dos" target="_blank" rel="noopener">js-dos</a> (GPL-2.0, DOSBox) · <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener">fflate</a> (MIT).<br>
+    Les fichiers du jeu ne sont pas inclus dans l'appli : ils restent sur votre appareil.</p>
+  </div>
+</div>
+
+<!-- ================= JEU ================= -->
+<div id="game" hidden>
+  <div id="topbar">
+    <button class="tb" id="tbMenu" aria-label="Menu"><img src="icons/favicon.svg" alt=""></button>
+    <span class="sp"></span>
+    <button class="tb k-tap" data-key="256">Échap</button>
+    <button class="tb k-tap" data-key="258">Tab</button>
+    <button class="tb k-tap" data-key="80">P</button>
+    <button class="tb" id="tbKbd" aria-label="Clavier">⌨︎ ABC</button>
+    <button class="tb" id="tbCodes">Code</button>
+  </div>
+
+  <div id="stage">
+    <div id="dos"></div>
+    <div id="loading"><img src="icons/favicon.svg" alt=""><span id="loadingText">Préparation du jeu…</span></div>
+  </div>
+
+  <div id="controls-pad">
+    <div class="pad" id="pad" aria-label="Croix directionnelle">
+      <div class="arm v"></div><div class="arm h"></div>
+      <div class="tri u"></div><div class="tri d"></div><div class="tri l"></div><div class="tri r"></div>
+      <div class="knob" id="knob"></div>
+    </div>
+  </div>
+
+  <div id="controls-act">
+    <div class="cmds">
+      <button class="k" data-key="84"><span class="l">T</span><span class="s">Prendre</span></button>
+      <button class="k" data-key="85"><span class="l">U</span><span class="s">Utiliser</span></button>
+      <button class="k" data-key="76"><span class="l">L</span><span class="s">Examiner</span></button>
+      <button class="k" data-key="83"><span class="l">S</span><span class="s">Parler</span></button>
+      <button class="k" data-key="73"><span class="l">I</span><span class="s">Perso</span></button>
+      <button class="k" data-key="68"><span class="l">D</span><span class="s">Système</span></button>
+    </div>
+    <div class="bigrow">
+      <button class="k enter" data-key="257"><span class="l">↵</span><span class="s">Entrée</span></button>
+      <button class="k fire" data-key="32"><span class="l">✦</span><span class="s">Feu</span></button>
+    </div>
+  </div>
+
+  <div id="kbd" hidden></div>
+</div>
+
+<!-- ================= CODES ================= -->
+<div class="sheet" id="sheetCodes" hidden>
+  <div class="panel">
+    <button class="close" data-close>✕</button>
+    <h2>Code de protection</h2>
+    <p class="hint">Le jeu affiche « Reference <b>08 APR</b> » : touchez le mois puis le jour.<br>Attention : <b>un seul essai</b>.</p>
+    <div class="codes-body">
+      <div>
+        <div class="grid-m" id="gridMonths"></div>
+        <div class="grid-d" id="gridDays"></div>
+      </div>
+      <div>
+        <div class="result">
+          <div class="ref" id="codeRef">— — —</div>
+          <div class="code" id="codeVal">···</div>
+          <div class="warn" id="codeWarn">Choisissez la référence affichée par le jeu.</div>
+        </div>
+        <button class="xbtn primary" id="btnSendCode" disabled>Saisir dans le jeu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MENU ================= -->
+<div class="sheet" id="sheetMenu" hidden>
+  <div class="panel menu-list">
+    <button class="close" data-close>✕</button>
+    <h2>Eternam</h2>
+    <p class="hint">Les sauvegardes du jeu (touche D → SAVE) sont enregistrées automatiquement sur l'appareil.</p>
+    <button class="xbtn" id="mResume">▶&nbsp; Reprendre</button>
+    <button class="xbtn" id="mSound">🔊&nbsp; Son : activé</button>
+    <button class="xbtn" id="mSave">💾&nbsp; Enregistrer les sauvegardes maintenant</button>
+    <button class="xbtn" id="mRestart">↻&nbsp; Redémarrer le jeu</button>
+    <button class="xbtn danger" id="mQuit">⏏&nbsp; Quitter vers l'accueil</button>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script src="vendor/fflate.js"></script>
+<script src="vendor/js-dos/js-dos.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------------- Stockage local (IndexedDB) ---------------- */
+var DB_NAME = 'eternam-pwa', STORE = 'kv';
+function idb(){
+  return new Promise(function(res, rej){
+    var r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = function(){ r.result.createObjectStore(STORE); };
+    r.onsuccess = function(){ res(r.result); };
+    r.onerror = function(){ rej(r.error); };
+  });
+}
+var dbp = null;
+function db(){ return dbp || (dbp = idb()); }
+function kvGet(k){ return db().then(function(d){ return new Promise(function(res, rej){
+  var q = d.transaction(STORE).objectStore(STORE).get(k); q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ rej(q.error); }; }); }); }
+function kvSet(k, v){ return db().then(function(d){ return new Promise(function(res, rej){
+  var t = d.transaction(STORE, 'readwrite'); t.objectStore(STORE).put(v, k); t.oncomplete = function(){ res(); }; t.onerror = function(){ rej(t.error); }; }); }); }
+function kvDel(k){ return db().then(function(d){ return new Promise(function(res, rej){
+  var t = d.transaction(STORE, 'readwrite'); t.objectStore(STORE).delete(k); t.oncomplete = function(){ res(); }; t.onerror = function(){ rej(t.error); }; }); }); }
+
+/* ---------------- Utilitaires ---------------- */
+var $ = function(id){ return document.getElementById(id); };
+var toastT = 0;
+function toast(msg, ms){ var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, ms || 2600); }
+function buzz(){ if (navigator.vibrate) { try{ navigator.vibrate(8); }catch(e){} } }
+function fmtDate(ts){ try { return new Date(ts).toLocaleString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}); } catch(e){ return ''; } }
+function readFile(f){ return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(new Uint8Array(r.result)); }; r.onerror = function(){ rej(r.error); }; r.readAsArrayBuffer(f); }); }
+function download(name, bytes){
+  var url = URL.createObjectURL(new Blob([bytes], {type:'application/zip'}));
+  var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+}
+function isUserFile(name){ return name && name.charAt(name.length - 1) !== '/' && name.indexOf('.jsdos/') !== 0; }
+function hash(u8){ var h = 2166136261 >>> 0; for (var i = 0; i < u8.length; i += 7) { h ^= u8[i]; h = Math.imul(h, 16777619) >>> 0; } return h + ':' + u8.length; }
+
+/* ---------------- État ---------------- */
+var state = { hasGame:false, codes:null, ci:null, dos:null, blobUrl:null, running:false, saving:false, lastSig:null, muted:false, wake:null };
+
+/* ---------------- Accueil ---------------- */
+async function refreshHome(){
+  var game = await kvGet('gameInfo'); var savedAt = await kvGet('changesAt'); var changes = await kvGet('changes');
+  state.hasGame = !!game; state.codes = (await kvGet('codes')) || null;
+  $('btnPlay').disabled = !state.hasGame;
+  $('stDot').classList.toggle('ok', state.hasGame);
+  if (state.hasGame) {
+    $('stTitle').textContent = 'Jeu prêt';
+    $('stText').textContent = 'Importé le ' + fmtDate(game.at) + ' · ' + (game.size / 1048576).toFixed(1) + ' Mo · fonctionne hors ligne.';
+    $('btnImport').textContent = 'Réimporter…';
+  } else {
+    $('stTitle').textContent = 'Jeu non importé';
+    $('btnImport').textContent = 'Importer le jeu…';
+  }
+  if (changes && changes.length) {
+    var n = 0; try { n = Object.keys(fflate.unzipSync(changes)).filter(function(k){ return /\.AVE$/i.test(k); }).length; } catch(e){}
+    $('saveInfo').textContent = (n ? n + ' partie(s) sauvegardée(s)' : 'Réglages enregistrés') + (savedAt ? ' · dernier enregistrement le ' + fmtDate(savedAt) : '') + '.';
+  } else { $('saveInfo').textContent = 'Aucune sauvegarde enregistrée pour le moment.'; }
+}
+
+$('btnImport').onclick = function(){ $('fileGame').click(); };
+$('fileGame').onchange = async function(e){
+  var f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  toast('Import en cours…', 8000);
+  try {
+    var u8 = await readFile(f);
+    var files = fflate.unzipSync(u8, { filter: function(fi){ return /^\.jsdos\/|TATOU\.COM$/i.test(fi.name); } });
+    var names = Object.keys(files);
+    var conf = names.find(function(n){ return /^\.jsdos\/dosbox\.conf$/i.test(n); });
+    if (!conf) throw new Error('Ce fichier n’est pas un bundle js-dos (.jsdos).');
+    if (!names.some(function(n){ return /TATOU\.COM$/i.test(n); })) throw new Error('Ce bundle ne contient pas Eternam (TATOU.COM introuvable).');
+    var codesName = names.find(function(n){ return /eternam-codes\.json$/i.test(n); });
+    if (codesName) { await kvSet('codes', JSON.parse(fflate.strFromU8(files[codesName]))); }
+    await kvSet('game', u8);
+    await kvSet('gameInfo', { at: Date.now(), size: u8.length, name: f.name });
+    if (navigator.storage && navigator.storage.persist) { try { await navigator.storage.persist(); } catch(_){} }
+    toast('Jeu importé ✓');
+  } catch(err) { console.error(err); toast(err.message || 'Import impossible', 5000); }
+  refreshHome();
+};
+
+$('btnExport').onclick = async function(){
+  var c = await kvGet('changes'); if (!c) { toast('Aucune sauvegarde à exporter'); return; }
+  var d = new Date(); var stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  download('eternam-sauvegardes-' + stamp + '.zip', c);
+};
+$('btnImportSave').onclick = function(){ $('fileSave').click(); };
+$('fileSave').onchange = async function(e){
+  var f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    var u8 = await readFile(f); var files = fflate.unzipSync(u8); var keep = {};
+    Object.keys(files).forEach(function(n){ if (isUserFile(n)) keep[n] = files[n]; });
+    if (!Object.keys(keep).length) throw new Error('Archive vide');
+    await kvSet('changes', fflate.zipSync(keep, { level: 6 })); await kvSet('changesAt', Date.now());
+    toast('Sauvegardes importées ✓'); refreshHome();
+  } catch(err) { toast('Archive de sauvegarde invalide', 4000); }
+};
+$('btnReset').onclick = async function(){
+  if (!confirm('Supprimer le jeu et toutes les sauvegardes de cet appareil ?')) return;
+  await kvDel('game'); await kvDel('gameInfo'); await kvDel('changes'); await kvDel('changesAt'); await kvDel('codes');
+  toast('Données supprimées'); refreshHome();
+};
+
+/* ---------------- Codes de protection ---------------- */
+var MONTHS = [['JAN','Janvier'],['FEB','Février'],['MAR','Mars'],['APR','Avril'],['MAY','Mai'],['JUN','Juin'],
+              ['JUL','Juillet'],['AUG','Août'],['SEP','Septembre'],['OCT','Octobre'],['NOV','Novembre'],['DEC','Décembre']];
+var DAYS = [1,2,3,4,8,9,10,11,15,16,17,18,22,23,24,25];
+var sel = { m: null, d: null };
+function buildCodes(){
+  var gm = $('gridMonths'); gm.innerHTML = '';
+  MONTHS.forEach(function(m, i){
+    var b = document.createElement('button'); b.className = 'chip'; b.innerHTML = '<b>' + m[0] + '</b><span>' + m[1] + '</span>';
+    b.onclick = function(){ sel.m = i; buzz(); renderCodes(); }; gm.appendChild(b);
+  });
+  var gd = $('gridDays'); gd.innerHTML = '';
+  DAYS.forEach(function(d){
+    var b = document.createElement('button'); b.className = 'chip'; b.innerHTML = '<b>' + String(d).padStart(2,'0') + '</b>';
+    b.onclick = function(){ sel.d = d; buzz(); renderCodes(); }; gd.appendChild(b);
+  });
+}
+function currentCode(){
+  if (sel.m === null || sel.d === null || !state.codes) return null;
+  var m = state.codes.months ? state.codes.months[sel.m] : MONTHS[sel.m][1];
+  return (state.codes.codes[m] || {})[String(sel.d)] || null;
+}
+function renderCodes(){
+  [].forEach.call($('gridMonths').children, function(b, i){ b.classList.toggle('sel', i === sel.m); });
+  [].forEach.call($('gridDays').children, function(b, i){ b.classList.toggle('sel', DAYS[i] === sel.d); });
+  var ref = (sel.d !== null ? String(sel.d).padStart(2,'0') : '— —') + ' ' + (sel.m !== null ? MONTHS[sel.m][0] : '———');
+  $('codeRef').textContent = 'Reference ' + ref;
+  var code = currentCode();
+  if (!state.codes) { $('codeVal').textContent = '···'; $('codeWarn').textContent = 'Importez d’abord eternam.jsdos : la table des codes est dans le fichier.'; }
+  else if (code) { $('codeVal').textContent = code; $('codeWarn').textContent = state.running ? 'Touchez « Saisir dans le jeu » : le code et Entrée sont tapés pour vous.' : 'À taper quand le jeu le demande (un seul essai).'; }
+  else { $('codeVal').textContent = '···'; $('codeWarn').textContent = 'Choisissez la référence affichée par le jeu.'; }
+  $('btnSendCode').disabled = !(code && state.running);
+  $('btnSendCode').textContent = code ? 'Saisir ' + code + ' dans le jeu' : 'Saisir dans le jeu';
+}
+function openCodes(){ $('sheetCodes').hidden = false; renderCodes(); }
+$('btnCodes').onclick = openCodes;
+$('tbCodes').onclick = openCodes;
+$('btnSendCode').onclick = async function(){
+  var code = currentCode(); if (!code || !state.ci) return;
+  $('sheetCodes').hidden = true;
+  await new Promise(function(r){ setTimeout(r, 250); });
+  for (var i = 0; i < code.length; i++) { await tapKey(48 + Number(code[i])); }
+  await tapKey(257);
+  toast('Code ' + code + ' saisi');
+};
+document.querySelectorAll('[data-close]').forEach(function(b){ b.onclick = function(){ b.closest('.sheet').hidden = true; }; });
+document.querySelectorAll('.sheet').forEach(function(s){ s.addEventListener('click', function(e){ if (e.target === s) s.hidden = true; }); });
+
+/* ---------------- Clavier vers l'émulateur ---------------- */
+var held = new Map(); // keyCode -> nombre d'appuis en cours
+function keyDown(code){ var n = held.get(code) || 0; held.set(code, n + 1); if (n === 0 && state.ci) state.ci.sendKeyEvent(code, true); }
+function keyUp(code){ var n = held.get(code) || 0; if (n <= 1) { held.delete(code); if (state.ci) state.ci.sendKeyEvent(code, false); } else held.set(code, n - 1); }
+function releaseAll(){ held.forEach(function(_, code){ if (state.ci) state.ci.sendKeyEvent(code, false); }); held.clear(); }
+function tapKey(code){ return new Promise(function(res){ keyDown(code); setTimeout(function(){ keyUp(code); setTimeout(res, 120); }, 130); }); }
+
+// Boutons maintenus (pointer events) : appui = touche enfoncée, relâche ≥ 70 ms plus tard
+function bindHold(el){
+  var code = Number(el.dataset.key), active = {};
+  el.addEventListener('pointerdown', function(e){
+    e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch(_){}
+    active[e.pointerId] = performance.now(); el.classList.add('on'); buzz(); keyDown(code);
+  });
+  function up(e){
+    if (!(e.pointerId in active)) return;
+    var t0 = active[e.pointerId]; delete active[e.pointerId];
+    var wait = Math.max(0, 110 - (performance.now() - t0));
+    setTimeout(function(){ keyUp(code); if (!Object.keys(active).length) el.classList.remove('on'); }, wait);
+  }
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+  el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+}
+document.querySelectorAll('#controls-act .k, #topbar .k-tap').forEach(bindHold);
+
+// Croix directionnelle 8 directions
+(function(){
+  var pad = $('pad'), knob = $('knob'), pid = null, cur = [];
+  var K = { u:265, d:264, l:263, r:262 };
+  function setDirs(dirs){
+    cur.filter(function(x){ return dirs.indexOf(x) < 0; }).forEach(function(x){ keyUp(K[x]); pad.querySelector('.tri.' + x).classList.remove('on'); });
+    dirs.filter(function(x){ return cur.indexOf(x) < 0; }).forEach(function(x){ keyDown(K[x]); pad.querySelector('.tri.' + x).classList.add('on'); });
+    if (dirs.length && !cur.length) buzz();
+    cur = dirs;
+  }
+  function update(e){
+    var r = pad.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+    var dx = e.clientX - cx, dy = e.clientY - cy, R = r.width/2, dist = Math.hypot(dx, dy);
+    var k = Math.min(dist, R*0.38) / (dist || 1);
+    knob.style.transform = 'translate(' + (dx*k) + 'px,' + (dy*k) + 'px)';
+    if (dist < R*0.16) { setDirs([]); return; }
+    var a = Math.atan2(dy, dx) * 180 / Math.PI; // 0 = droite, 90 = bas
+    var sector = Math.round(((a + 360) % 360) / 45) % 8;
+    var map = [['r'],['d','r'],['d'],['d','l'],['l'],['u','l'],['u'],['u','r']];
+    setDirs(map[sector]);
+  }
+  pad.addEventListener('pointerdown', function(e){ if (pid !== null) return; e.preventDefault(); pid = e.pointerId; try { pad.setPointerCapture(pid); } catch(_){} update(e); });
+  pad.addEventListener('pointermove', function(e){ if (e.pointerId === pid) update(e); });
+  function end(e){ if (e.pointerId !== pid) return; pid = null; setDirs([]); knob.style.transform = ''; }
+  pad.addEventListener('pointerup', end); pad.addEventListener('pointercancel', end); pad.addEventListener('lostpointercapture', end);
+})();
+
+// Clavier virtuel AZERTY (noms de sauvegarde, code saisi à la main…)
+// Eternam lit le clavier comme un AZERTY : chaque touche envoie donc la touche PHYSIQUE
+// correspondante d'un clavier QWERTY (A ↔ Q, Z ↔ W, M ↔ ;) pour que la lettre affichée soit la bonne.
+(function(){
+  function az(label, phys){ return { l: label, k: phys === ';' ? 59 : phys.charCodeAt(0) }; }
+  function row(labels, phys){ return labels.split('').map(function(c, i){ return az(c, phys[i]); }); }
+  var rows = [
+    '1234567890'.split(''),
+    row('AZERTYUIOP', 'QWERTYUIOP'),
+    row('QSDFGHJKLM', 'ASDFGHJKL;'),
+    row('WXCVBN', 'ZXCVBN').concat([{l:'⌫',k:259,c:'w2'}]),
+    [{l:'Échap',k:256,c:'w2'},{l:'Espace',k:32,c:'w4'},{l:'←',k:263},{l:'↑',k:265},{l:'↓',k:264},{l:'→',k:262},{l:'Entrée',k:257,c:'w2'}]
+  ];
+  var kb = $('kbd');
+  rows.forEach(function(row){
+    var r = document.createElement('div'); r.className = 'r';
+    row.forEach(function(it){
+      var o = typeof it === 'string' ? { l: it, k: it.charCodeAt(0) } : it;
+      var b = document.createElement('button'); b.className = 'k' + (o.c ? ' ' + o.c : ''); b.dataset.key = o.k;
+      b.innerHTML = '<span class="l">' + o.l + '</span>'; r.appendChild(b); bindHold(b);
+    });
+    kb.appendChild(r);
+  });
+  var close = document.createElement('div'); close.className = 'r';
+  var cb = document.createElement('button'); cb.className = 'tb'; cb.style.width = '100%'; cb.textContent = 'Fermer le clavier';
+  cb.onclick = function(){ kb.hidden = true; $('tbKbd').classList.remove('on'); };
+  close.appendChild(cb); kb.appendChild(close);
+  $('tbKbd').onclick = function(){ kb.hidden = !kb.hidden; $('tbKbd').classList.toggle('on', !kb.hidden); };
+})();
+
+// Clavier physique (tablette avec clavier) : géré nativement par js-dos.
+
+/* ---------------- Sauvegarde des fichiers modifiés ---------------- */
+async function saveChanges(manual){
+  if (!state.ci || state.saving) return false;
+  state.saving = true;
+  try {
+    var u = await state.ci.persist(true);
+    if (!(u instanceof Uint8Array) || u.length < 30) { if (manual) toast('Rien de nouveau à enregistrer'); return false; }
+    var sig = hash(u); if (sig === state.lastSig) { if (manual) toast('Sauvegardes déjà à jour ✓'); return false; }
+    var fresh = fflate.unzipSync(u), names = Object.keys(fresh).filter(isUserFile);
+    if (!names.length) { state.lastSig = sig; if (manual) toast('Rien de nouveau à enregistrer'); return false; }
+    var prev = await kvGet('changes'), merged = {};
+    if (prev) { var old = fflate.unzipSync(prev); Object.keys(old).forEach(function(n){ if (isUserFile(n)) merged[n] = old[n]; }); }
+    names.forEach(function(n){ merged[n] = fresh[n]; });
+    await kvSet('changes', fflate.zipSync(merged, { level: 6 }));
+    await kvSet('changesAt', Date.now());
+    state.lastSig = sig;
+    if (manual) toast('Sauvegardes enregistrées ✓');
+    return true;
+  } catch(err) { console.error(err); if (manual) toast('Échec de l’enregistrement', 4000); return false; }
+  finally { state.saving = false; }
+}
+setInterval(function(){ if (state.running && !document.hidden) saveChanges(false); }, 20000);
+document.addEventListener('visibilitychange', function(){
+  if (document.hidden) { releaseAll(); if (state.running) saveChanges(false); }
+  else if (state.running) { requestWake(); }
+});
+window.addEventListener('pagehide', function(){ if (state.running) saveChanges(false); });
+
+async function requestWake(){ try { if ('wakeLock' in navigator) state.wake = await navigator.wakeLock.request('screen'); } catch(_){} }
+
+/* ---------------- Lancement / arrêt ---------------- */
+async function buildBundle(){
+  var game = await kvGet('game'); if (!game) throw new Error('Jeu non importé');
+  var changes = await kvGet('changes');
+  if (!changes) return game;
+  var all = fflate.unzipSync(game), ch = fflate.unzipSync(changes), out = {};
+  Object.keys(all).forEach(function(n){ if (n.charAt(n.length - 1) !== '/') out[n] = [all[n], { level: 0 }]; });
+  Object.keys(ch).forEach(function(n){ if (isUserFile(n)) out[n] = [ch[n], { level: 0 }]; });
+  return fflate.zipSync(out, { level: 0 });
+}
+
+async function startGame(){
+  $('home').hidden = true; $('game').hidden = false; $('loading').hidden = false; $('loadingText').textContent = 'Préparation du jeu…';
+  state.lastSig = null;
+  try {
+    var bundle = await buildBundle();
+    if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
+    state.blobUrl = URL.createObjectURL(new Blob([bundle], { type: 'application/zip' }));
+    $('loadingText').textContent = 'Démarrage de l’émulateur…';
+    var host = $('dos'); host.innerHTML = ''; var el = document.createElement('div'); el.style.cssText = 'position:absolute;inset:0'; host.appendChild(el);
+    state.dos = Dos(el, {
+      url: state.blobUrl,
+      pathPrefix: new URL('vendor/js-dos/emulators/', location.href).href,
+      kiosk: true, autoStart: true, noCloud: true, noNetworking: true,
+      theme: 'dark', renderAspect: '4/3', imageRendering: 'pixelated', mouseCapture: false,
+      onEvent: function(ev, arg){
+        if (ev === 'ci-ready') {
+          state.ci = arg; state.running = true; window.eternamCI = arg; $('loading').hidden = true;
+          if (!state.hintShown) { state.hintShown = true; setTimeout(function(){ toast('Quand le jeu affiche « Reference », touchez Code', 4500); }, 6000); }
+          if (state.muted) try { arg.mute(); } catch(_){}
+          requestWake();
+        }
+      }
+    });
+  } catch(err) {
+    console.error(err); toast(err.message || 'Lancement impossible', 5000); await stopGame(false);
+  }
+}
+
+async function stopGame(save){
+  if (save !== false) await saveChanges(false);
+  releaseAll();
+  state.running = false;
+  try { if (state.dos && state.dos.stop) await state.dos.stop(); } catch(_){}
+  state.dos = null; state.ci = null; window.eternamCI = null;
+  $('dos').innerHTML = '';
+  if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
+  try { if (state.wake) await state.wake.release(); } catch(_){}
+  (window.__acs || []).forEach(function(c){ try { if (c.state !== 'closed') c.close(); } catch(_){} });
+  window.__acs = [];
+  $('kbd').hidden = true; $('tbKbd').classList.remove('on');
+  $('game').hidden = true; $('home').hidden = false;
+  refreshHome();
+}
+
+$('btnPlay').onclick = startGame;
+$('tbMenu').onclick = function(){ $('sheetMenu').hidden = false; };
+$('mResume').onclick = function(){ $('sheetMenu').hidden = true; };
+$('mSave').onclick = async function(){ $('sheetMenu').hidden = true; await saveChanges(true); };
+$('mQuit').onclick = async function(){ $('sheetMenu').hidden = true; await stopGame(true); };
+$('mRestart').onclick = async function(){ $('sheetMenu').hidden = true; await stopGame(true); startGame(); };
+$('mSound').onclick = function(){
+  state.muted = !state.muted;
+  try { if (state.ci) { state.muted ? state.ci.mute() : state.ci.unmute(); } } catch(_){}
+  $('mSound').innerHTML = (state.muted ? '🔇&nbsp; Son : coupé' : '🔊&nbsp; Son : activé');
+};
+
+/* ---------------- Démarrage ---------------- */
+// js-dos garde une copie de chaque bundle lancé : inutile ici (le jeu est déjà dans notre base), on la purge au démarrage.
+try { indexedDB.deleteDatabase('js-dos-cache (guest)'); } catch(_){}
+buildCodes();
+refreshHome().catch(function(e){ console.error(e); toast('Stockage local indisponible (navigation privée ?)', 5000); });
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+document.addEventListener('dblclick', function(e){ e.preventDefault(); }, { passive:false });
+})();
+</script>
+</body>
+</html>
