@@ -1,5 +1,5 @@
 /* Eternam PWA — cache hors ligne de l'appli (le jeu lui-même est stocké dans IndexedDB). */
-const VERSION = 'eternam-v1';
+const VERSION = 'eternam-v2';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest',
   'icons/favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png',
@@ -18,6 +18,13 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
+  // Page principale : réseau d'abord (mises à jour immédiates), cache si hors ligne.
+  if (req.mode === 'navigate') {
+    e.respondWith(fetch(req).then(res => {
+      const copy = res.clone(); caches.open(VERSION).then(c => c.put('index.html', copy)); return res;
+    }).catch(() => caches.match('index.html')));
+    return;
+  }
   e.respondWith(
     caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req).then(res => {
       if (res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }

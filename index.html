@@ -141,6 +141,40 @@ details[open].xcard summary::after{content:"－"}
   .k.fire,.k.enter{min-height:min(58px,15dvh)}
 }
 
+/* grands écrans (tablettes) : commandes plus grandes */
+@media (min-width:700px) and (min-height:600px){
+  .pad{width:min(45vw,260px)}
+  .cmds{max-width:330px;gap:10px} .bigrow{max-width:330px;gap:12px}
+  .k{min-height:62px;border-radius:14px} .k .l{font-size:21px} .k .s{font-size:12px;margin-top:5px}
+  .k.fire,.k.enter{min-height:86px} .k.fire{border-radius:43px} .k.enter{border-radius:20px}
+  .tb{height:44px;min-width:54px;font-size:15px}
+  #controls-pad,#controls-act{padding-bottom:44px}
+  #kbd .k{max-width:76px;min-height:56px} #kbd .k .l{font-size:19px}
+}
+@media (orientation:landscape) and (min-width:700px) and (min-height:600px){
+  .pad{width:min(100%,230px)}
+  .cmds,.bigrow{max-width:290px}
+  .k{min-height:58px} .k.fire,.k.enter{min-height:78px}
+}
+
+/* mode « jeu agrandi » (paysage) : le jeu prend toute la hauteur, les commandes se superposent,
+   placées au-dessus de la barre d'icônes du jeu pour ne pas la masquer */
+@media (orientation:landscape){
+  #game.big{display:block}
+  #game.big #topbar{position:absolute;top:var(--sat);left:0;right:0;z-index:6;background:transparent;height:46px}
+  #game.big #stage{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 46px);margin:0;
+    height:min(calc(100dvh - var(--sat) - var(--sab) - 46px), calc(100vw * 0.75));width:auto;max-width:none}
+  #game.big #controls-pad,#game.big #controls-act{position:absolute;z-index:6;background:transparent;padding:0;
+    bottom:calc(var(--sab) + (100dvh - var(--sat) - var(--sab) - 46px) * 0.16 + 10px)}
+  #game.big #controls-pad{left:calc(var(--sal) + 14px)}
+  #game.big #controls-act{right:calc(var(--sar) + 14px);width:min(30vw,290px)}
+  #game.big .pad{width:min(26vw,230px,48dvh);opacity:.62;background:radial-gradient(circle at 50% 45%,rgba(58,46,38,.7),rgba(35,27,22,.55))}
+  #game.big #controls-act .k{background:rgba(48,38,31,.5);border-color:rgba(201,128,79,.35);box-shadow:none;opacity:.8}
+  #game.big #controls-act .k.fire{background:rgba(201,128,79,.55)}
+  #game.big #controls-act .k.on{opacity:1;background:var(--copper)}
+  #game.big .tb{background:rgba(48,38,31,.65)}
+}
+
 /* clavier virtuel */
 #kbd{position:absolute;left:0;right:0;bottom:0;z-index:20;background:var(--ink);border-top:1px solid var(--line);
   padding:8px calc(var(--sar) + 6px) calc(var(--sab) + 8px) calc(var(--sal) + 6px)}
@@ -346,6 +380,7 @@ details[open].xcard summary::after{content:"－"}
     <p class="hint">Les sauvegardes du jeu (touche D → SAVE) sont enregistrées automatiquement sur l'appareil.</p>
     <button class="xbtn" id="mResume">▶&nbsp; Reprendre</button>
     <button class="xbtn" id="mSound">🔊&nbsp; Son : activé</button>
+    <button class="xbtn" id="mLayout">⛶&nbsp; Affichage paysage : jeu agrandi</button>
     <button class="xbtn" id="mSave">💾&nbsp; Enregistrer les sauvegardes maintenant</button>
     <button class="xbtn" id="mRestart">↻&nbsp; Redémarrer le jeu</button>
     <button class="xbtn danger" id="mQuit">⏏&nbsp; Quitter vers l'accueil</button>
@@ -590,7 +625,53 @@ document.querySelectorAll('#controls-act .k, #topbar .k-tap').forEach(bindHold);
   $('tbKbd').onclick = function(){ kb.hidden = !kb.hidden; $('tbKbd').classList.toggle('on', !kb.hidden); };
 })();
 
-// Clavier physique (tablette avec clavier) : géré nativement par js-dos.
+// Clavier physique (tablette avec clavier, ordinateur) : on transmet la POSITION de la touche
+// (event.code), pas la lettre. Le jeu interprétant le clavier en AZERTY, un clavier français
+// donne ainsi les bonnes lettres, et un clavier QWERTY se comporte comme sur un PC de l'époque.
+(function(){
+  var MAP = { Enter:257, NumpadEnter:257, Escape:256, Tab:258, Backspace:259, Space:32,
+    ArrowLeft:263, ArrowRight:262, ArrowUp:265, ArrowDown:264, Semicolon:59,
+    ShiftLeft:340, ShiftRight:344, ControlLeft:341, ControlRight:345, AltLeft:342 };
+  function phys(e){
+    var c = e.code || '';
+    if (/^Key[A-Z]$/.test(c)) return c.charCodeAt(3);
+    if (/^Digit[0-9]$/.test(c)) return 48 + Number(c.charAt(5));
+    if (/^Numpad[0-9]$/.test(c)) return 48 + Number(c.charAt(6));
+    if (/^F([1-9]|1[0-2])$/.test(c)) return 289 + Number(c.slice(1));
+    return MAP[c];
+  }
+  ['keydown', 'keyup'].forEach(function(type){
+    window.addEventListener(type, function(e){
+      if (!state.running || !state.ci) return;
+      if (!$('sheetCodes').hidden || !$('sheetMenu').hidden) return;
+      if (e.metaKey) return;
+      var k = phys(e); if (k === undefined) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (type === 'keydown') { if (!e.repeat) keyDown(k); } else keyUp(k);
+    }, true);
+  });
+  window.addEventListener('blur', releaseAll);
+})();
+
+// Affichage en paysage : « jeu agrandi » (commandes superposées) ou « côte à côte ».
+// Par défaut : agrandi sur tablette, côte à côte sur téléphone. Préférence gardée sur l'appareil.
+var LAYOUT_KEY = 'eternam-layout';
+function layoutBig(){
+  try { var v = localStorage.getItem(LAYOUT_KEY); if (v === 'big') return true; if (v === 'side') return false; } catch(_){}
+  return Math.min(screen.width, screen.height) >= 600;
+}
+function applyLayout(){
+  var big = layoutBig();
+  $('game').classList.toggle('big', big);
+  $('mLayout').innerHTML = big ? '⛶&nbsp; Affichage paysage : jeu agrandi' : '◫&nbsp; Affichage paysage : commandes à côté';
+}
+$('mLayout').onclick = function(){
+  var big = !layoutBig();
+  try { localStorage.setItem(LAYOUT_KEY, big ? 'big' : 'side'); } catch(_){}
+  applyLayout();
+  toast(big ? 'Jeu agrandi, commandes superposées (en paysage)' : 'Commandes à côté du jeu (en paysage)');
+};
+applyLayout();
 
 /* ---------------- Sauvegarde des fichiers modifiés ---------------- */
 async function saveChanges(manual){
