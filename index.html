@@ -259,6 +259,11 @@ details[open].xcard summary::after{content:"－"}
       <div><b id="stTitle">Jeu non importé</b><small id="stText">Importez le fichier <b>eternam.jsdos</b> une seule fois : il reste ensuite stocké sur cet appareil, utilisable hors ligne.</small></div>
     </div>
 
+    <div class="xcard" id="notice" hidden style="border-color:var(--copper-lo)">
+      <div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--copper-hi)">ⓘ</span>
+      <small id="noticeText" style="flex:1;color:var(--parch);font-size:14px;line-height:1.45"></small>
+      <button onclick="this.closest('#notice').hidden=true" style="color:var(--parch-dim);font-size:18px;padding:0 4px">✕</button></div>
+    </div>
     <button class="xbtn primary" id="btnPlay" disabled>▶&nbsp; Jouer</button>
     <div class="row2" style="margin-top:10px">
       <button class="xbtn" id="btnCodes">Codes de protection</button>
@@ -729,14 +734,15 @@ async function buildBundle(){
   var game = await kvGet('game'); if (!game) throw new Error('Jeu non importé');
   var changes = await kvGet('changes');
   var all = fflate.unzipSync(game), out = {};
-  Object.keys(all).forEach(function(n){ if (n.charAt(n.length - 1) !== '/') out[n] = [all[n], { level: 0 }]; });
+  var orig = new Date(1993, 1, 17, 12, 0, 0); // date des fichiers d'origine (le jeu ne voit pas de fichiers « modifiés aujourd'hui »)
+  Object.keys(all).forEach(function(n){ if (n.charAt(n.length - 1) !== '/') out[n] = [all[n], { level: 0, mtime: orig }]; });
   if (changes) { var ch = fflate.unzipSync(changes); Object.keys(ch).forEach(function(n){ if (isUserFile(n)) out[n] = [ch[n], { level: 0 }]; }); }
   // Vitesse : on réécrit la ligne cycles= de la configuration DOSBox du bundle.
   var confName = Object.keys(out).find(function(n){ return /^\.jsdos\/dosbox\.conf$/i.test(n); });
   if (confName) {
     var conf = fflate.strFromU8(out[confName][0]), cyc = 'cycles=fixed ' + SPEEDS[speedIndex()].cycles;
     conf = /^\s*cycles\s*=.*$/mi.test(conf) ? conf.replace(/^\s*cycles\s*=.*$/mi, cyc) : conf.replace(/\[cpu\]/i, '[cpu]\n' + cyc);
-    out[confName] = [fflate.strToU8(conf), { level: 0 }];
+    out[confName] = [fflate.strToU8(conf), { level: 0, mtime: orig }];
   }
   state.runningSpeed = speedIndex();
   return fflate.zipSync(out, { level: 0 });
@@ -793,6 +799,14 @@ async function startGame(){
       onEvent: function(ev, arg){
         if (ev === 'ci-ready') {
           state.ci = arg; state.running = true; window.eternamCI = arg; $('loading').hidden = true;
+          state.sawGraphics = false; state.ending = false;
+          try {
+            arg.events().onFrameSize(function(w, h){
+              if (w <= 320) state.sawGraphics = true;
+              else if (state.sawGraphics) setTimeout(checkDosPrompt, 1500);
+            });
+            arg.events().onExit(function(){ if (state.running) onGameEnded(); });
+          } catch(_){}
           if (!state.hintShown) { state.hintShown = true; setTimeout(function(){ toast('Quand le jeu affiche « Reference », touchez Code', 4500); }, 6000); }
           if (state.muted) try { arg.mute(); } catch(_){}
           requestWake();
@@ -803,6 +817,23 @@ async function startGame(){
     console.error(err); toast(err.message || 'Lancement impossible', 5000); await stopGame(false);
   }
 }
+
+// Le jeu s'est terminé (fin de partie, Échap → quitter, ou plantage) : DOSBox retombe sur
+// l'invite « C:\> » en mode texte, écran presque noir. On enregistre et on revient à l'accueil.
+async function checkDosPrompt(){
+  if (!state.ci || state.ending) return;
+  try {
+    var im = await state.ci.screenshot(), d = im.data, lit = 0, n = 0;
+    for (var i = 0; i < d.length; i += 32) { n++; if (d[i] + d[i+1] + d[i+2] > 90) lit++; }
+    if (lit / n < 0.012) onGameEnded();
+  } catch(_){}
+}
+async function onGameEnded(){
+  if (state.ending) return; state.ending = true;
+  await stopGame(true);
+  showNotice('Le jeu s’est arrêté (fin de partie ou retour au DOS). Vos sauvegardes sont conservées : relancez puis D → LOAD pour reprendre.');
+}
+function showNotice(msg){ $('noticeText').textContent = msg; $('notice').hidden = false; }
 
 async function stopGame(save){
   if (save !== false) await saveChanges(false);

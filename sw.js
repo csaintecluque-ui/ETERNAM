@@ -1,5 +1,5 @@
 /* Eternam PWA — cache hors ligne de l'appli (le jeu lui-même est stocké dans IndexedDB). */
-const VERSION = 'eternam-v4';
+const VERSION = 'eternam-v5';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest',
   'icons/favicon.svg', 'icons/eternam-icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png',
