@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1B1512">
 <meta name="color-scheme" content="dark">
+<script>
+/* Thème de l'accueil : clair par défaut, sombre au choix (posé avant l'affichage). L'écran du jeu reste noir. */
+(function(){ var t='light'; try{ if(localStorage.getItem('eternam.theme')==='dark') t='dark'; }catch(_){}
+  document.documentElement.setAttribute('data-theme', t); })();
+</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -39,6 +44,15 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #home{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   padding:calc(var(--sat) + 14px) calc(var(--sar) + 16px) calc(var(--sab) + 28px) calc(var(--sal) + 16px);
   background:radial-gradient(120% 70% at 50% 0%, #2b211b 0%, var(--ink) 60%)}
+/* thème clair : l'accueil seulement */
+:root[data-theme="light"] #home{
+  --ink:#F4ECDD; --ink-2:#FFFAF1; --ink-3:#EBE0CC; --line:#D4C5AB;
+  --copper:#B5622F; --copper-hi:#C9804F; --copper-lo:#C9A27F;
+  --parch:#2B2019; --parch-dim:#6A5A4C; --muted:#8C7B66; --danger:#B5412D;
+  color:var(--parch); color-scheme:light;
+  background:radial-gradient(120% 70% at 50% 0%, #FFFBF3 0%, var(--ink) 60%)}
+:root[data-theme="light"] #home .hero h1{text-shadow:0 1px 0 #fff, 0 0 28px rgba(201,128,79,.28)}
+:root[data-theme="light"] #home .dot.ok{background:#4f8a3a;box-shadow:0 0 8px #4f8a3a66}
 .wrap{max-width:560px;margin:0 auto}
 .brand{display:flex;align-items:center;gap:10px;color:var(--parch-dim);font-size:13px;letter-spacing:.04em}
 .brand img{width:36px;height:36px;display:block}
@@ -320,6 +334,8 @@ details[open].xcard summary::after{content:"－"}
         <p>Le jeu tourne mieux en mode paysage. Le son démarre au premier appui sur l'écran.</p>
       </div>
     </details>
+
+    <button class="xbtn ghost" id="btnTheme" style="margin-top:14px">Thème sombre</button>
 
     <p class="foot">Émulation : <a href="https://github.com/caiiiycuk/js-dos" target="_blank" rel="noopener">js-dos</a> (GPL-2.0, DOSBox) · <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener">fflate</a> (MIT).<br>
     Les fichiers du jeu ne sont pas inclus dans l'appli : ils restent sur votre appareil.</p>
@@ -884,6 +900,25 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 }
 document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 document.addEventListener('dblclick', function(e){ e.preventDefault(); }, { passive:false });
+})();
+</script>
+<script>
+/* Thème clair / sombre de l'accueil, gardé sur l'appareil */
+(function(){
+  var b = document.getElementById('btnTheme'); if (!b) return;
+  var game = document.getElementById('game');
+  function show(){ var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    b.textContent = dark ? 'Thème clair' : 'Thème sombre';
+    var enJeu = game && !game.hidden;   // pendant le jeu, la barre du téléphone reste sombre
+    var m = document.querySelector('meta[name=theme-color]'); if (m) m.content = dark || enJeu ? '#1B1512' : '#F4ECDD'; }
+  if (game && window.MutationObserver) new MutationObserver(show).observe(game, { attributes: true, attributeFilter: ['hidden'] });
+  b.addEventListener('click', function(){
+    var t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('eternam.theme', t); } catch(_){}
+    show();
+  });
+  show();
 })();
 </script>
 </body>
